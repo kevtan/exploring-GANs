@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torchvision
 from matplotlib import pyplot as plt
@@ -6,6 +8,9 @@ from torchvision import transforms
 
 from discriminator import Discriminator
 from generator import Generator
+
+CHECKPOINT_DIRECTORY = "checkpoints"
+
 
 # Manually set a seed for reproducibility.
 torch.manual_seed(111)
@@ -47,6 +52,10 @@ loss_function = nn.BCELoss()
 
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
 G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
+
+# Create a checkpoints directory if one doesn't already exist.
+if not os.path.exists(CHECKPOINT_DIRECTORY):
+    os.mkdir(CHECKPOINT_DIRECTORY)
 
 for epoch in range(num_epochs):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
