@@ -49,7 +49,7 @@ loss_function = nn.BCELoss()
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
 G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
 
-for epoch in trange(num_epochs):
+for epoch in trange(num_epochs, desc="Epochs"):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
         # Mix real images with fake images as input to the discriminator.
         real_samples = real_samples.to(device=device)
@@ -79,8 +79,9 @@ for epoch in trange(num_epochs):
         G_optimizer.step()
 
         if n == batch_size - 1:
-            tqdm.write(f"Epoch: {epoch} Loss D.: {D_loss}")
-            tqdm.write(f"Epoch: {epoch} Loss G.: {G_loss}")
+            tqdm.write(f"Epoch: {epoch:<5}", end="")
+            tqdm.write(f"Discriminator Loss: {D_loss:5.3f}", end="\t")
+            tqdm.write(f"Generator Loss: {G_loss:5.3f}")
 
 torch.save(generator.state_dict(), "generator.pt")
 torch.save(discriminator.state_dict(), "discriminator.pt")
