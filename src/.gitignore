@@ -1,2 +1,6 @@
 # Checkpoint Files
 checkpoints/
+
+# Inference Results
+performance.png
+
