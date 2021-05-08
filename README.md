@@ -22,3 +22,9 @@
    pip install -r requirements_macos.txt
    pip install -r requirements_linux.txt
    ```
+
+## Cleanliness
+
+Use `black` and `isort` to keep the code clean! They are installed as part of
+the development dependencies.
+
