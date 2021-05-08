@@ -3,6 +3,7 @@ import torchvision
 from matplotlib import pyplot as plt
 from torch import nn
 from torchvision import transforms
+from tqdm import tqdm, trange
 
 from discriminator import Discriminator
 from generator import Generator
@@ -48,7 +49,7 @@ loss_function = nn.BCELoss()
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
 G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
 
-for epoch in range(num_epochs):
+for epoch in trange(num_epochs):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
         # Mix real images with fake images as input to the discriminator.
         real_samples = real_samples.to(device=device)
@@ -78,8 +79,8 @@ for epoch in range(num_epochs):
         G_optimizer.step()
 
         if n == batch_size - 1:
-            print(f"Epoch: {epoch} Loss D.: {D_loss}")
-            print(f"Epoch: {epoch} Loss G.: {G_loss}")
+            tqdm.write(f"Epoch: {epoch} Loss D.: {D_loss}")
+            tqdm.write(f"Epoch: {epoch} Loss G.: {G_loss}")
 
 torch.save(generator.state_dict(), "generator.pt")
 torch.save(discriminator.state_dict(), "discriminator.pt")
