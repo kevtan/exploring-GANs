@@ -1,3 +1,6 @@
+import os
+from datetime import date, datetime
+
 import torch
 import torchvision
 from matplotlib import pyplot as plt
@@ -38,6 +41,21 @@ for i in range(16):
     plt.imshow(real_samples[i].reshape(28, 28), cmap="gray_r")
     plt.xticks([])
     plt.yticks([])
+
+ROOT_CHECKPOINTS_DIRECTORY = "checkpoints"
+today = date.today().strftime("%Y-%m-%d")
+today_directory = f"{ROOT_CHECKPOINTS_DIRECTORY}/{today}"
+hour_minute_second = datetime.now().strftime("%H:%M:%S")
+experiment_directory = f"{today_directory}/{hour_minute_second}"
+print(f"Experiment Directory: {experiment_directory}")
+
+if not os.path.exists(ROOT_CHECKPOINTS_DIRECTORY):
+    os.mkdir(ROOT_CHECKPOINTS_DIRECTORY)
+if not os.path.exists(today_directory):
+    os.mkdir(today_directory)
+if not os.path.exists(experiment_directory):
+    os.mkdir(experiment_directory)
+
 
 discriminator = Discriminator().to(device=device)
 generator = Generator().to(device=device)
@@ -82,6 +100,18 @@ for epoch in trange(num_epochs, desc="Epochs"):
             tqdm.write(f"Epoch: {epoch:<5}", end="")
             tqdm.write(f"Discriminator Loss: {D_loss:5.3f}", end="\t")
             tqdm.write(f"Generator Loss: {G_loss:5.3f}")
+    # Create a checkpoint at every epoch
+    checkpoint_data = {
+        "epoch": epoch,
+        "generator_state_dict": generator.state_dict(),
+        "discriminator_state_dict": discriminator.state_dict(),
+        "generator_optimizer_state_dict": G_optimizer.state_dict(),
+        "discriminator_optimizer_state_dict": D_optimizer.state_dict(),
+        "generator_loss": G_loss.item(),
+        "discriminator_loss": D_loss.item(),
+    }
+    checkpoint_name = f"epoch-{epoch}.tar"
+    torch.save(checkpoint_data, f"{experiment_directory}/{checkpoint_name}")
 
 torch.save(generator.state_dict(), "generator.pt")
 torch.save(discriminator.state_dict(), "discriminator.pt")
