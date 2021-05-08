@@ -28,3 +28,24 @@
 Use `black` and `isort` to keep the code clean! They are installed as part of
 the development dependencies.
 
+## Training
+
+## Inference
+
+To see the inference results on Linux:
+
+- Make sure you SSH-ed with the `-YC` options to enable GUI commands.
+- Install `imagemagick` with `sudo apt install imagemagick`.
+- This gives you a tool called `display`.
+- Use `display` to display your image from the command line.
+
+## Utilities
+
+There is currently a utility script `info.py` that informs you whether or not
+CUDA is enabled on your system.
+
+```text
+❯ python info.py
+CUDA:   Yes
+```
+
