@@ -21,3 +21,7 @@ class Discriminator(nn.Module):
     def forward(self, x):
         x = x.view(x.size(0), 784)
         return self.model(x)
+
+
+if __name__ == "__main__":
+    print(Discriminator())
