@@ -19,8 +19,8 @@
 3. Install the required dependencies using one of the following commands:
 
    ```bash
-   pip install -r requirements_macos.txt
-   pip install -r requirements_linux.txt
+   pip3 install -r requirements_macos.txt
+   pip3 install -r requirements_linux.txt
    ```
 
 ## Cleanliness
