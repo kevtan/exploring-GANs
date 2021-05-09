@@ -114,6 +114,3 @@ for epoch in trange(num_epochs, desc="Epochs"):
     }
     checkpoint_name = f"epoch-{epoch}.tar"
     torch.save(checkpoint_data, f"{experiment_directory}/{checkpoint_name}")
-
-torch.save(generator.state_dict(), "generator.pt")
-torch.save(discriminator.state_dict(), "discriminator.pt")
