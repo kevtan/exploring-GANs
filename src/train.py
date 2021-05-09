@@ -15,10 +15,12 @@ from generator import Generator
 torch.manual_seed(111)
 
 # Use CUDA device if one exists on the system.
-device = ""
+device = None
 if torch.cuda.is_available():
+    print("Training on the GPU")
     device = torch.device("cuda")
 else:
+    print("Training on the CPU")
     device = torch.device("cpu")
 
 transform = transforms.Compose(
