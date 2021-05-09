@@ -30,6 +30,12 @@ the development dependencies.
 
 ## Training
 
+We experimented with training on various platforms and found that the training speed varied widely between platforms. The following numbers were obtained using the original FCGAN network architecture.
+
+- On a 2017 MacBook Pro with a 3.1 GHz Dual-Core Intel Core i5 processor and 8 GB 2133 MHz LPDDR3 RAM, each epoch took around 89.21 s.
+- With a AMD Ryzen 7 3700X 8-Core Processor and 32 GB 3200 MHz DDR4 RAM, each epoch took around 56.77 s.
+- Using an NVIDIA 3060 Ti GPU, each epoch took just 15.55 s.
+
 ## Inference
 
 To see the inference results on Linux:
