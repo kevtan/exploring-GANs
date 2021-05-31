@@ -1,6 +1,7 @@
 import os
 from datetime import date, datetime
 
+import numpy as np
 import torch
 import torchvision
 from matplotlib import pyplot as plt
@@ -79,8 +80,12 @@ G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
 FIXED_NOISE_VECTORS_NUMBER = 20
 FIXED_NOISE_VECTORS_FILENAME = "fixed_noise_vectors.csv"
 fixed_noise_vector_dimension = 100
-fixed_noise_vectors = torch.randn((FIXED_NOISE_VECTORS_NUMBER, fixed_noise_vector_dimension)).to(device=device)
-torch.save(fixed_noise_vectors, f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}")
+fixed_noise_vectors = torch.randn(
+    (FIXED_NOISE_VECTORS_NUMBER, fixed_noise_vector_dimension)
+).to(device=device)
+np.savetxt(
+    f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}", fixed_noise_vectors.cpu().numpy()
+)
 
 
 for epoch in trange(num_epochs, desc="Epochs"):
@@ -116,11 +121,21 @@ for epoch in trange(num_epochs, desc="Epochs"):
             tqdm.write(f"Epoch: {epoch:<5}", end="")
             tqdm.write(f"Discriminator Loss: {D_loss:5.3f}", end="\t")
             tqdm.write(f"Generator Loss: {G_loss:5.3f}")
-    
+
     # Feed fixed noise vectors into the generator and save results.
     fixed_noise_vector_images = generator(fixed_noise_vectors).detach()
-    image_grid = torchvision.utils.make_grid(fixed_noise_vector_images, normalize=True, nrow=5)
+    image_grid = torchvision.utils.make_grid(
+        fixed_noise_vector_images, normalize=True, nrow=5
+    )
     writer.add_image(tag="generation_results", img_tensor=image_grid, global_step=epoch)
+
+    # Log generator and discriminator loss every epoch.
+    writer.add_scalar(
+        tag="generator_loss", scalar_value=G_loss.item(), global_step=epoch
+    )
+    writer.add_scalar(
+        tag="discriminator_loss", scalar_value=D_loss.item(), global_step=epoch
+    )
 
     # Create a checkpoint at every epoch
     checkpoint_data = {
