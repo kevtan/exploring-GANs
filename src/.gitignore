@@ -4,3 +4,5 @@ checkpoints/
 # Inference Results
 performance.png
 
+# Tensorboard Logs
+runs/

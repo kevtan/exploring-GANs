@@ -5,11 +5,15 @@ import torch
 import torchvision
 from matplotlib import pyplot as plt
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm, trange
 
 from discriminator import Discriminator
 from generator import Generator
+
+# Create a TensorBoard writer.
+writer = SummaryWriter()
 
 # Manually set a seed for reproducibility.
 torch.manual_seed(111)
@@ -69,6 +73,16 @@ loss_function = nn.BCELoss()
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
 G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
 
+# Choose a fixed set of noise vectors to track the generator's progress for
+# this experiment. This set of noise vectors will be saved in the checkpoint
+# directory for this experiment in a file named `fixed_noise_vectors.csv`.
+FIXED_NOISE_VECTORS_NUMBER = 20
+FIXED_NOISE_VECTORS_FILENAME = "fixed_noise_vectors.csv"
+fixed_noise_vector_dimension = 100
+fixed_noise_vectors = torch.randn((FIXED_NOISE_VECTORS_NUMBER, fixed_noise_vector_dimension)).to(device=device)
+torch.save(fixed_noise_vectors, f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}")
+
+
 for epoch in trange(num_epochs, desc="Epochs"):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
         # Mix real images with fake images as input to the discriminator.
@@ -102,6 +116,12 @@ for epoch in trange(num_epochs, desc="Epochs"):
             tqdm.write(f"Epoch: {epoch:<5}", end="")
             tqdm.write(f"Discriminator Loss: {D_loss:5.3f}", end="\t")
             tqdm.write(f"Generator Loss: {G_loss:5.3f}")
+    
+    # Feed fixed noise vectors into the generator and save results.
+    fixed_noise_vector_images = generator(fixed_noise_vectors).detach()
+    image_grid = torchvision.utils.make_grid(fixed_noise_vector_images, normalize=True, nrow=5)
+    writer.add_image(tag="generation_results", img_tensor=image_grid, global_step=epoch)
+
     # Create a checkpoint at every epoch
     checkpoint_data = {
         "epoch": epoch,
