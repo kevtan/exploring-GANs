@@ -42,12 +42,12 @@ train_loader = torch.utils.data.DataLoader(
 )
 
 # Visualize the training data.
-real_samples, mnist_labels = next(iter(train_loader))
-for i in range(16):
-    ax = plt.subplot(4, 4, i + 1)
-    plt.imshow(real_samples[i].reshape(28, 28), cmap="gray_r")
-    plt.xticks([])
-    plt.yticks([])
+# real_samples, mnist_labels = next(iter(train_loader))
+# for i in range(16):
+#     ax = plt.subplot(4, 4, i + 1)
+#     plt.imshow(real_samples[i].reshape(28, 28), cmap="gray_r")
+#     plt.xticks([])
+#     plt.yticks([])
 
 ROOT_CHECKPOINTS_DIRECTORY = "checkpoints"
 today = date.today().strftime("%Y-%m-%d")
