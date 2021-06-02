@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 
 from generator import Generator
 
+
 def main():
     # Prompt the user for a checkpoint to restore from.
     # TODO: give the user a list of recent checkpoints to choose from
@@ -38,6 +39,7 @@ def main():
     # TODO: figure out a better place to save this image
     image_path = "performance.png"
     plt.savefig(image_path)
+
 
 if __name__ == "__main__":
     main()
