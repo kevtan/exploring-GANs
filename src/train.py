@@ -10,8 +10,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm, trange
 
-from models.discriminator.discriminator import Discriminator
-from models.generator.generator import Generator
+from models.discriminator.fc_complex import Discriminator
+from models.generator.fc_complex import Generator
 
 # Create a TensorBoard writer.
 writer = SummaryWriter()
