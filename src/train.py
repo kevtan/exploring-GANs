@@ -130,7 +130,7 @@ epoch_offset: int = 0
 if checkpoint is not None:
     last_hyphen = checkpoint.rfind("-")
     last_period = checkpoint.rfind(".")
-    epoch_offset = int(checkpoint[last_hyphen + 1 : last_period])
+    epoch_offset = int(checkpoint[last_hyphen + 1 : last_period]) + 1
 
 for epoch in trange(num_epochs, desc="Epochs"):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
