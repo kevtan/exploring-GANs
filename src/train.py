@@ -29,6 +29,12 @@ num_epochs = 200
 # Example: checkpoints/2021-06-02/01:09:06/epoch-49.tar
 #
 checkpoint: Optional[str] = None
+
+#
+# TensorBoard log directory to resume logging to.
+#
+# Example: runs/Jun02_01-09-06_ubuntu-workstation
+#
 tensorboard_checkpoint: Optional[str] = None
 
 checkpoint_dict: Optional[dict] = None
