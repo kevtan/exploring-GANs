@@ -1,5 +1,6 @@
 import os
 from datetime import date, datetime
+from typing import Optional
 
 import numpy as np
 import torch
@@ -10,14 +11,27 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm, trange
 
-from models.discriminator.fc_complex import Discriminator
-from models.generator.fc_complex import Generator
-
-# Create a TensorBoard writer.
-writer = SummaryWriter()
+from models.discriminator.fc_simple import Discriminator
+from models.generator.fc_simple import Generator
 
 # Manually set a seed for reproducibility.
 torch.manual_seed(111)
+
+#
+# Checkpoint to resume training from.
+#
+# Example: checkpoints/2021-06-02/01:09:06/epoch-49.tar
+#
+checkpoint: Optional[str] = "checkpoints/2021-06-02/01:09:06/epoch-49.tar"
+tensorboard_checkpoint: Optional[str] = "runs/Jun02_01-09-06_ubuntu-workstation"
+
+checkpoint_dict: Optional[dict] = None
+
+if checkpoint is not None:
+    checkpoint_dict = torch.load(checkpoint)
+
+# Create a TensorBoard writer.
+writer = SummaryWriter(tensorboard_checkpoint)
 
 # Use CUDA device if one exists on the system.
 device = None
@@ -49,23 +63,32 @@ train_loader = torch.utils.data.DataLoader(
 #     plt.xticks([])
 #     plt.yticks([])
 
-ROOT_CHECKPOINTS_DIRECTORY = "checkpoints"
-today = date.today().strftime("%Y-%m-%d")
-today_directory = f"{ROOT_CHECKPOINTS_DIRECTORY}/{today}"
-hour_minute_second = datetime.now().strftime("%H:%M:%S")
-experiment_directory = f"{today_directory}/{hour_minute_second}"
+experiment_directory: Optional[str] = None
+if checkpoint is None:
+    # Start training from the beginning.
+    ROOT_CHECKPOINTS_DIRECTORY = "checkpoints"
+    today = date.today().strftime("%Y-%m-%d")
+    today_directory = f"{ROOT_CHECKPOINTS_DIRECTORY}/{today}"
+    hour_minute_second = datetime.now().strftime("%H:%M:%S")
+    experiment_directory = f"{today_directory}/{hour_minute_second}"
+    if not os.path.exists(ROOT_CHECKPOINTS_DIRECTORY):
+        os.mkdir(ROOT_CHECKPOINTS_DIRECTORY)
+    if not os.path.exists(today_directory):
+        os.mkdir(today_directory)
+    if not os.path.exists(experiment_directory):
+        os.mkdir(experiment_directory)
+else:
+    # Start training from a checkpoint
+    last_sep_pos = checkpoint.rfind("/")
+    experiment_directory = checkpoint[:last_sep_pos]
 print(f"Experiment Directory: {experiment_directory}")
-
-if not os.path.exists(ROOT_CHECKPOINTS_DIRECTORY):
-    os.mkdir(ROOT_CHECKPOINTS_DIRECTORY)
-if not os.path.exists(today_directory):
-    os.mkdir(today_directory)
-if not os.path.exists(experiment_directory):
-    os.mkdir(experiment_directory)
-
 
 discriminator = Discriminator().to(device=device)
 generator = Generator().to(device=device)
+
+if checkpoint is not None:
+    discriminator.load_state_dict(checkpoint_dict["discriminator_state_dict"])
+    generator.load_state_dict(checkpoint_dict["generator_state_dict"])
 
 lr = 0.0001
 num_epochs = 50
@@ -74,19 +97,40 @@ loss_function = nn.BCELoss()
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
 G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr)
 
+if checkpoint is not None:
+    D_optimizer.load_state_dict(checkpoint_dict["discriminator_optimizer_state_dict"])
+    G_optimizer.load_state_dict(checkpoint_dict["generator_optimizer_state_dict"])
+
 # Choose a fixed set of noise vectors to track the generator's progress for
 # this experiment. This set of noise vectors will be saved in the checkpoint
 # directory for this experiment in a file named `fixed_noise_vectors.csv`.
 FIXED_NOISE_VECTORS_NUMBER = 20
 FIXED_NOISE_VECTORS_FILENAME = "fixed_noise_vectors.csv"
 fixed_noise_vector_dimension = 100
-fixed_noise_vectors = torch.randn(
-    (FIXED_NOISE_VECTORS_NUMBER, fixed_noise_vector_dimension)
-).to(device=device)
-np.savetxt(
-    f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}", fixed_noise_vectors.cpu().numpy()
-)
 
+fixed_noise_vectors: Optional[torch.Tensor] = None
+if checkpoint is None:
+    # Create new fixed noise vectors.
+    fixed_noise_vectors = torch.randn(
+        (FIXED_NOISE_VECTORS_NUMBER, fixed_noise_vector_dimension)
+    ).to(device=device)
+    np.savetxt(
+        f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}",
+        fixed_noise_vectors.cpu().numpy(),
+    )
+else:
+    # Restore old fixed noise vectors.
+    fixed_noise_vectors = torch.tensor(
+        np.loadtxt(f"{experiment_directory}/{FIXED_NOISE_VECTORS_FILENAME}"),
+        dtype=torch.float,
+    ).to(device=device)
+
+
+epoch_offset: int = 0
+if checkpoint is not None:
+    last_hyphen = checkpoint.rfind("-")
+    last_period = checkpoint.rfind(".")
+    epoch_offset = int(checkpoint[last_hyphen + 1 : last_period])
 
 for epoch in trange(num_epochs, desc="Epochs"):
     for n, (real_samples, mnist_labels) in enumerate(train_loader):
@@ -118,7 +162,7 @@ for epoch in trange(num_epochs, desc="Epochs"):
         G_optimizer.step()
 
         if n == batch_size - 1:
-            tqdm.write(f"Epoch: {epoch:<5}", end="")
+            tqdm.write(f"Epoch: {epoch_offset + epoch:<5}", end="")
             tqdm.write(f"Discriminator Loss: {D_loss:5.3f}", end="\t")
             tqdm.write(f"Generator Loss: {G_loss:5.3f}")
 
@@ -127,19 +171,27 @@ for epoch in trange(num_epochs, desc="Epochs"):
     image_grid = torchvision.utils.make_grid(
         fixed_noise_vector_images, normalize=True, nrow=5
     )
-    writer.add_image(tag="generation_results", img_tensor=image_grid, global_step=epoch)
+    writer.add_image(
+        tag="generation_results",
+        img_tensor=image_grid,
+        global_step=epoch_offset + epoch,
+    )
 
     # Log generator and discriminator loss every epoch.
     writer.add_scalar(
-        tag="generator_loss", scalar_value=G_loss.item(), global_step=epoch
+        tag="generator_loss",
+        scalar_value=G_loss.item(),
+        global_step=epoch_offset + epoch,
     )
     writer.add_scalar(
-        tag="discriminator_loss", scalar_value=D_loss.item(), global_step=epoch
+        tag="discriminator_loss",
+        scalar_value=D_loss.item(),
+        global_step=epoch_offset + epoch,
     )
 
     # Create a checkpoint at every epoch
     checkpoint_data = {
-        "epoch": epoch,
+        "epoch": epoch_offset + epoch,
         "generator_state_dict": generator.state_dict(),
         "discriminator_state_dict": discriminator.state_dict(),
         "generator_optimizer_state_dict": G_optimizer.state_dict(),
@@ -147,5 +199,5 @@ for epoch in trange(num_epochs, desc="Epochs"):
         "generator_loss": G_loss.item(),
         "discriminator_loss": D_loss.item(),
     }
-    checkpoint_name = f"epoch-{epoch}.tar"
+    checkpoint_name = f"epoch-{epoch_offset + epoch}.tar"
     torch.save(checkpoint_data, f"{experiment_directory}/{checkpoint_name}")
