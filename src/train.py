@@ -18,12 +18,18 @@ from models.generator.fc_simple import Generator
 torch.manual_seed(111)
 
 #
+# Training hyperparameters.
+#
+lr = 0.0001
+num_epochs = 200
+
+#
 # Checkpoint to resume training from.
 #
 # Example: checkpoints/2021-06-02/01:09:06/epoch-49.tar
 #
-checkpoint: Optional[str] = "checkpoints/2021-06-02/01:09:06/epoch-49.tar"
-tensorboard_checkpoint: Optional[str] = "runs/Jun02_01-09-06_ubuntu-workstation"
+checkpoint: Optional[str] = None
+tensorboard_checkpoint: Optional[str] = None
 
 checkpoint_dict: Optional[dict] = None
 
@@ -90,8 +96,6 @@ if checkpoint is not None:
     discriminator.load_state_dict(checkpoint_dict["discriminator_state_dict"])
     generator.load_state_dict(checkpoint_dict["generator_state_dict"])
 
-lr = 0.0001
-num_epochs = 50
 loss_function = nn.BCELoss()
 
 D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr)
